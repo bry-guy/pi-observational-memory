@@ -301,7 +301,7 @@ Default: `true`.
 
 The observer reads the conversation as text. When enabled, the assistant's thinking blocks are part of that text. Some providers block requests that carry another model's thinking as plain text; Anthropic, for example, can reject them as duplicating model outputs. When that happens, the observer retries the same chunk once without thinking and covers the same source entries.
 
-Set it to `false` to never send thinking to the observer. Reflector and dropper requests never contain the conversation, so this setting does not affect them.
+Set it to `false` to never send thinking to the observer. The `recall` tool then also leaves thinking out of the source entries it returns, so it isn't added to the main conversation as plain text. Reflector and dropper requests never contain the conversation, so this setting does not affect them.
 
 ## `debugLog`
 

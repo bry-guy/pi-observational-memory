@@ -3890,7 +3890,8 @@ var recallObservationTool = defineTool({
       const message = `Memory id must be 12 lowercase hex characters. Received: ${memoryId}`;
       return textResult(message, emptyDetails("invalid_id", memoryId, message));
     }
-    const branchEntries = ctx.sessionManager.getBranch();
+    let branchEntries = ctx.sessionManager.getBranch();
+    if (!includeThinking(ctx.cwd)) branchEntries = branchEntries.map(withoutThinking);
     const result = recallMemorySources(branchEntries, memoryId);
     if (result.status === "not_found") {
       const message = `No observation or reflection with id ${memoryId} was found on the current branch.`;
@@ -3899,7 +3900,19 @@ var recallObservationTool = defineTool({
     return renderFoundResult(result);
   }
 });
-function registerRecallTool(pi) {
+var includeThinking = () => true;
+function withoutThinking(entry) {
+  const message = entry.message;
+  if (entry.type !== "message" || message?.role !== "assistant" || !Array.isArray(message.content)) return entry;
+  return { ...entry, message: { ...message, content: message.content.filter((block) => block?.type !== "thinking") } };
+}
+function registerRecallTool(pi, runtime) {
+  if (runtime) {
+    includeThinking = (cwd) => {
+      runtime.ensureConfig(cwd);
+      return runtime.config.observeThinking;
+    };
+  }
   pi.registerTool(recallObservationTool);
 }
 
@@ -3913,7 +3926,7 @@ function observationalMemory(pi) {
   registerCompactionHook(pi, runtime);
   registerStatusCommand(pi, runtime);
   registerViewCommand(pi, runtime);
-  registerRecallTool(pi);
+  registerRecallTool(pi, runtime);
 }
 export {
   observationalMemory as default
