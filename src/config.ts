@@ -111,7 +111,8 @@ export interface Config {
 	/**
 	 * Include the assistant's thinking blocks in the conversation text sent to
 	 * the observer. When true and the provider blocks that request, the observer
-	 * retries the same chunk once without thinking.
+	 * retries the same chunk once without thinking. When false, the recall tool
+	 * also leaves thinking out of the source entries it returns.
 	 */
 	observeThinking: boolean;
 	/**
