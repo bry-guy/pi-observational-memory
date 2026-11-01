@@ -12,6 +12,7 @@ import {
 import type { Observation, Reflection } from "../session-ledger/index.js";
 import { renderRecallSourceEntries, renderRecallSourceEntry } from "../serialize.js";
 import { estimateEntryTokens } from "../tokens.js";
+import type { Runtime } from "../runtime.js";
 
 export const RECALL_OBSERVATION_TOOL_NAME = "recall";
 
@@ -468,7 +469,8 @@ export const recallObservationTool = defineTool({
 			const message = `Memory id must be 12 lowercase hex characters. Received: ${memoryId}`;
 			return textResult(message, emptyDetails("invalid_id", memoryId, message));
 		}
-		const branchEntries = ctx.sessionManager.getBranch() as Entry[];
+		let branchEntries = ctx.sessionManager.getBranch() as Entry[];
+		if (!includeThinking(ctx.cwd)) branchEntries = branchEntries.map(withoutThinking);
 		const result = recallMemorySources(branchEntries, memoryId);
 		if (result.status === "not_found") {
 			const message = `No observation or reflection with id ${memoryId} was found on the current branch.`;
@@ -478,6 +480,21 @@ export const recallObservationTool = defineTool({
 	},
 });
 
-export function registerRecallTool(pi: ExtensionAPI): void {
+/** Decides per call whether recalled assistant entries keep their thinking blocks. */
+let includeThinking: (cwd: string) => boolean = () => true;
+
+function withoutThinking(entry: Entry): Entry {
+	const message = (entry as { message?: { role?: string; content?: unknown } }).message;
+	if (entry.type !== "message" || message?.role !== "assistant" || !Array.isArray(message.content)) return entry;
+	return { ...entry, message: { ...message, content: message.content.filter((block: { type?: string }) => block?.type !== "thinking") } } as Entry;
+}
+
+export function registerRecallTool(pi: ExtensionAPI, runtime?: Runtime): void {
+	if (runtime) {
+		includeThinking = (cwd) => {
+			runtime.ensureConfig(cwd);
+			return runtime.config.observeThinking;
+		};
+	}
 	pi.registerTool(recallObservationTool);
 }

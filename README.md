@@ -308,7 +308,7 @@ on the `Next compaction` line regardless of mode.
 | `showWorkerNotifications`   | `true`        | Shows routine observer, reflector, and dropper progress notifications. Warnings and errors are unaffected. |
 | `passive`                   | `false`       | Disables proactive background observation, reflection, maintenance, and auto-compaction triggers. |
 | `debugLog`                  | `false`       | Writes opt-in per-session extension debug events to Pi's agent directory.                         |
-| `observeThinking`           | `true`        | Includes the assistant's thinking in the conversation text sent to the observer. If the provider blocks such a request, the observer retries it once without thinking. Set `false` to never send thinking. |
+| `observeThinking`           | `true`        | Includes the assistant's thinking in the conversation text sent to the observer. If the provider blocks such a request, the observer retries it once without thinking. Set `false` to never send thinking, and to leave it out of `recall` results. |
 
 Valid `model.thinking` values are:
 
