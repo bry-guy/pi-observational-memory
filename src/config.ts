@@ -109,6 +109,12 @@ export interface Config {
 	passive: boolean;
 	debugLog: boolean;
 	/**
+	 * Include the assistant's thinking blocks in the conversation text sent to
+	 * the observer. When true and the provider blocks that request, the observer
+	 * retries the same chunk once without thinking.
+	 */
+	observeThinking: boolean;
+	/**
 	 * Pi's own `compaction.enabled` setting, read from the same settings files
 	 * (not an extension setting). When Pi's automatic compaction is disabled,
 	 * the proactive trigger counts raw source tokens instead of observed ones,
@@ -132,6 +138,7 @@ export const DEFAULTS: Config = {
 	showWorkerNotifications: true,
 	passive: false,
 	debugLog: false,
+	observeThinking: true,
 	piAutoCompactionEnabled: true,
 };
 
@@ -354,6 +361,7 @@ function normalizeSettingsConfig(value: Record<string, unknown>): Partial<Config
 	if (typeof value.showWorkerNotifications === "boolean") normalized.showWorkerNotifications = value.showWorkerNotifications;
 	if (typeof value.passive === "boolean") normalized.passive = value.passive;
 	if (typeof value.debugLog === "boolean") normalized.debugLog = value.debugLog;
+	if (typeof value.observeThinking === "boolean") normalized.observeThinking = value.observeThinking;
 	const model = normalizeModel(value.model);
 	if (model) normalized.model = model;
 	const fallbackModel = normalizeModel(value.fallbackModel);

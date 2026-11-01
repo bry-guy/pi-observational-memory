@@ -1,7 +1,7 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { runDropper } from "../agents/dropper/agent.js";
 import { observationPoolMetrics } from "../agents/dropper/pool.js";
-import { ObserverStreamError, runObserver } from "../agents/observer/agent.js";
+import { ObserverStreamError, observeChunkWithThinkingRetry, runObserver } from "../agents/observer/agent.js";
 import { runReflector } from "../agents/reflector/agent.js";
 import { debugLog, withDebugLogContext } from "../debug-log.js";
 import { resolveObserverChunkMaxTokens, resolveWorkerMemoryMaxTokens } from "../config.js";
@@ -476,7 +476,7 @@ async function runObserverStage(
 		sourceEntryIds,
 		estimatedTokens: chunkTokens,
 		truncatedSourceEntryIds,
-	} = serializeSourceAddressedBranchEntries(backlogEntries, { maxTokens: maxChunkTokens });
+	} = serializeSourceAddressedBranchEntries(backlogEntries, { maxTokens: maxChunkTokens, includeThinking: runtime.config.observeThinking });
 	if (!chunk.trim() || sourceEntryIds.length === 0) return "continue";
 	const coversUpToId = sourceEntryIds.at(-1);
 	if (!coversUpToId) return "continue";
@@ -515,21 +515,27 @@ async function runObserverStage(
 
 	let observations: Observation[] | undefined;
 	try {
-		observations = await runStageWithFallback(ctx, "observer", resolved, resolver, (worker) => runObserver({
+		observations = await runStageWithFallback(ctx, "observer", resolved, resolver, (worker) => observeChunkWithThinkingRetry(
+			backlogEntries,
+			{ text: chunk, sourceEntryIds },
+			{ maxTokens: maxChunkTokens, includeThinking: runtime.config.observeThinking },
+			(observedChunk) => runObserver({
 			model: worker.model as any,
 			apiKey: worker.apiKey,
 			headers: worker.headers,
 			env: worker.env,
 			priorReflections,
 			priorObservations,
-			chunk,
+			chunk: observedChunk,
 			allowedSourceEntryIds: sourceEntryIds,
 			maxTurns: runtime.config.agentMaxTurns,
 			maxOutputTokens: runtime.config.agentMaxTokens,
 			signal: consolidationSignal(runtime),
 			thinkingLevel: workerThinkingLevel(runtime, worker),
 			modelRegistry: ctx.modelRegistry,
-		}), consolidationSignal(runtime));
+		}),
+			(error) => debugLog("observer.retry_without_thinking", { error: error instanceof Error ? error.message : String(error) }),
+		), consolidationSignal(runtime));
 	} catch (error) {
 		if (wasAborted(runtime)) {
 			debugLog("observer.aborted", { coversUpToId });

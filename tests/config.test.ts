@@ -50,6 +50,7 @@ describe("V3 config", () => {
 			showWorkerNotifications: true,
 			passive: false,
 			debugLog: false,
+			observeThinking: true,
 			piAutoCompactionEnabled: true,
 		});
 		expect(loadConfig(cwd, {})).toEqual(DEFAULTS);
@@ -69,6 +70,7 @@ describe("V3 config", () => {
 				showWorkerNotifications: true,
 				passive: false,
 				debugLog: true,
+				observeThinking: false,
 			},
 		});
 		writeJson(join(cwd, ".pi", "settings.json"), {
@@ -91,6 +93,7 @@ describe("V3 config", () => {
 			showWorkerNotifications: false,
 			passive: true,
 			debugLog: true,
+			observeThinking: false,
 		});
 	});
 

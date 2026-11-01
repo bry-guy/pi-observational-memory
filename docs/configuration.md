@@ -84,6 +84,7 @@ You can omit everything. Defaults work for ordinary sessions, and if `model` is 
 | `showWorkerNotifications` | boolean | `true` | Shows routine observer, reflector, and dropper progress notifications. |
 | `passive` | boolean | `false` | Disables proactive background memory and auto-compaction triggers. |
 | `debugLog` | boolean | `false` | Writes best-effort per-session extension debug events to Pi's agent directory. |
+| `observeThinking` | boolean | `true` | Includes the assistant's thinking in the conversation text sent to the observer. See [`observeThinking`](#observethinking). |
 
 Valid `model.thinking` values are `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, and `max`.
 
@@ -293,6 +294,14 @@ Truthy values: `1`, `true`, `yes`, `on`.
 Falsy values: `0`, `false`, `no`, `off`.
 
 Unrecognized values are ignored.
+
+## `observeThinking`
+
+Default: `true`.
+
+The observer reads the conversation as text. When enabled, the assistant's thinking blocks are part of that text. Some providers block requests that carry another model's thinking as plain text; Anthropic, for example, can reject them as duplicating model outputs. When that happens, the observer retries the same chunk once without thinking and covers the same source entries.
+
+Set it to `false` to never send thinking to the observer. Reflector and dropper requests never contain the conversation, so this setting does not affect them.
 
 ## `debugLog`
 
